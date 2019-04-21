@@ -1,0 +1,47 @@
+    groups:
+    - name: test-rule
+      rules:
+      - alert: NodeMemoryUsage
+        expr: (100 - ((node_memory_MemFree+node_memory_Cached+node_memory_Buffers)/node_memory_MemTotal) * 100) > 80 
+        for: 5s 
+        labels:
+          team: node
+        annotations:
+          summary: "{{$labels.instance}}: High Memory usage detected"
+          description: "{{$labels.instance}}: Memory usage is above 80% \n(current value is: {{ $value| humanize }}%)"
+
+      - alert: NodeCPUUsage
+        expr: (100 - (avg by (instance) (irate(node_cpu{mode="idle"}[5m])) * 100)) > 80
+        for: 5s 
+        labels:
+          team: node
+        annotations:
+          summary: "{{$labels.instance}}: High CPU usage detected"
+          description: "{{$labels.instance}}: CPU usage is above 80% \n(current value is: {{ $value| humanize }}%)"
+
+      - alert: NodeDiskUsage
+        expr: (100-(node_filesystem_free{fstype="xfs",mountpoint="/"}/node_filesystem_size{fstype="xfs",mountpoint="/"})*100) > 85
+        for: 5s 
+        labels:
+          team: node
+        annotations:
+          summary: "{{$labels.instance}}: High Disk root usage detected"
+          description: "{{$labels.instance}}: Disk root usage is above 80% \n(current value is: {{ $value| humanize }}%)"
+
+      - alert: InstanceDown
+        expr: up==0 
+        for: 2m 
+        labels:
+          team: node
+        annotations:
+          summary: "Instance {{ $labels.instance }} down"
+          description: "{{ $labels.instance }} is down"
+
+      - alert: NodeLoadAverage 
+        expr: ((node_load5 / count without (cpu, mode) (node_cpu{mode="system"})) > 1) 
+        for: 5m 
+        labels:
+          team: node
+        annotations:
+          summary: "{{ $labels.instance }} LoadAverage is too high"
+          description: "{{ $labels.instance }}: Load Average is too high" 

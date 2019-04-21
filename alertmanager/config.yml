@@ -1,0 +1,16 @@
+global:
+    slack_api_url: "https://hooks.slack.com/services/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"
+
+route:
+    receiver: 'slack'
+    group_wait: 1s
+    group_interval: 5s
+    repeat_interval: 5m
+
+receivers:
+    - name: 'slack'
+      slack_configs:
+          - send_resolved: true
+            username: "prometheus"
+            channel: "#msam0503only"
+            text: "{{ range .Alerts }}{{ .Annotations.description }}\n{{ end }}"

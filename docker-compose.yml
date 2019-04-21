@@ -1,0 +1,95 @@
+version: '2'
+
+
+
+volumes:
+   prometheus_data:
+   grafana_data:
+
+services:
+   prometheus:
+     image: prom/prometheus:v2.2.1
+     volumes:
+       - ./prometheus/:/etc/prometheus/
+       - prometheus_data:/prometheus
+       - /etc/localtime:/etc/localtime 
+     command:
+       - '--storage.tsdb.path=/prometheus'
+       - '--config.file=/etc/prometheus/prometheus.yml'
+       - '--storage.tsdb.retention=365d'
+     links:
+       - grafana
+       - pushgateway
+       - alertmanager
+     restart: always
+     ports:
+       - "9090:9090"
+     ulimits:
+       nproc: 65535
+       nofile:
+         soft: 65535
+         hard: 65535
+
+   grafana:
+#     image: grafana/grafana
+     image: grafana/grafana:5.4.3
+#     depends_on:
+#       - prometheus
+     ports:
+       - "3000:3000"
+     restart: always
+     volumes:
+       - grafana_data:/var/lib/grafana
+       - ./grafana/provisioning:/etc/grafana/provisioning/
+     env_file:
+       - ./grafana/config.monitoring
+     ulimits:
+       nproc: 65535
+       nofile:
+         soft: 65535
+         hard: 65535
+     
+   alertmanager:
+     image:  prom/alertmanager
+     ports: 
+       - "9093:9093"
+     volumes:
+       - ./alertmanager/:/etc/alertmanager/
+     restart: always
+     command:
+       - '--config.file=/etc/alertmanager/config.yml'
+       - '--storage.path=/alertmanager'
+     ulimits:
+       nproc: 65535
+       nofile:
+         soft: 65535
+         hard: 65535
+
+   pushgateway:
+     image: prom/pushgateway
+#     depends_on:
+#       - prometheus
+     ports:
+       - "9091:9091"
+     restart: always
+     ulimits:
+       nproc: 65535
+       nofile:
+         soft: 65535
+         hard: 65535
+
+
+#   snmp_exporter:
+#     image: brian/snmp_exporter:latest
+#     depends_on:
+#       - prometheus
+#     volumes: 
+#       - "./snmp_exporter/snmp.yml:/snmp_exporter/snmp.yml"
+#     restart: always
+#     ports: 
+#       - "9516:9116"
+#     ulimits:
+#       nproc: 65535
+#       nofile:
+#         soft: 65535
+#         hard: 65535
